@@ -3,6 +3,7 @@ package handler
 import (
 	"bwastartup/helper"
 	"bwastartup/user"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -73,6 +74,45 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	response := helper.APIResponse("Successfuly Loggedin", http.StatusOK, "success", formatter)
 
+	c.JSON(http.StatusOK, response)
+
+}
+
+func (h *UserHandler) CheckEmailAvailability(c *gin.Context) {
+	var input user.CheckEmailInput
+	err := c.ShouldBindJSON(&input)
+
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+
+		errorsMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Email checking failed", http.StatusUnprocessableEntity, "Error", errorsMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	IsEmailAvailable, err := h.userService.IsEmailAvailable(input)
+	if err != nil {
+		errorMessage := gin.H{"errors": "Server Error"}
+		response := helper.APIResponse("Email checking failed", http.StatusUnprocessableEntity, "Error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	data := gin.H{
+		"is_available": IsEmailAvailable,
+	}
+
+	metaMessage := "Email has been registered"
+
+	fmt.Println(IsEmailAvailable)
+
+	if IsEmailAvailable {
+		metaMessage = "Email is available"
+	}
+
+	response := helper.APIResponse(metaMessage, http.StatusOK, "Success", data)
 	c.JSON(http.StatusOK, response)
 
 }
