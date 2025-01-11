@@ -3,7 +3,6 @@ package handler
 import (
 	"bwastartup/helper"
 	"bwastartup/user"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -93,6 +92,7 @@ func (h *UserHandler) CheckEmailAvailability(c *gin.Context) {
 	}
 
 	IsEmailAvailable, err := h.userService.IsEmailAvailable(input)
+
 	if err != nil {
 		errorMessage := gin.H{"errors": "Server Error"}
 		response := helper.APIResponse("Email checking failed", http.StatusUnprocessableEntity, "Error", errorMessage)
@@ -105,8 +105,6 @@ func (h *UserHandler) CheckEmailAvailability(c *gin.Context) {
 	}
 
 	metaMessage := "Email has been registered"
-
-	fmt.Println(IsEmailAvailable)
 
 	if IsEmailAvailable {
 		metaMessage = "Email is available"
