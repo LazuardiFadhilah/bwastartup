@@ -28,14 +28,18 @@ func main() {
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
 
-	campaign, err := campaignRepository.FindAll()
-	if err != nil {
-		fmt.Println("ERROR")
-	}
-	fmt.Println(campaign)
+	// campaign, err := campaignRepository.FindAll()
+	// if err != nil {
+	// 	fmt.Println("ERROR")
+	// }
+	// fmt.Println(campaign)
 
 	userService := user.NewService(userRepository)
+	campaignService := campaign.NewService(campaignRepository)
 	authService := auth.NewService()
+
+	campaigns, _ := campaignService.FindCampaigns(2)
+	fmt.Println(campaigns)
 
 	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
 	if err != nil {
