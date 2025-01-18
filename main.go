@@ -28,18 +28,9 @@ func main() {
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
 
-	// campaign, err := campaignRepository.FindAll()
-	// if err != nil {
-	// 	fmt.Println("ERROR")
-	// }
-	// fmt.Println(campaign)
-
 	userService := user.NewService(userRepository)
 	campaignService := campaign.NewService(campaignRepository)
 	authService := auth.NewService()
-
-	campaigns, _ := campaignService.FindCampaigns(2)
-	fmt.Println(campaigns)
 
 	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
 	if err != nil {
@@ -52,17 +43,19 @@ func main() {
 		fmt.Println("INVALID")
 	}
 
-	UserHandler := handler.NewUSerHandler(userService, authService)
+	userHandler := handler.NewUSerHandler(userService, authService)
+	campaignHandler := handler.NewCampaignHandler(campaignService)
 
 	router := gin.Default()
 
 	api := router.Group("/api/v1")
 
-	api.POST("/users", UserHandler.RegisterUser)
-	api.POST("/sessions", UserHandler.Login)
-	api.POST("/email_checkers", UserHandler.CheckEmailAvailability)
-	api.POST("/avatars", authMiddleware(authService, userService), UserHandler.UploadAvatar)
+	api.POST("/users", userHandler.RegisterUser)
+	api.POST("/sessions", userHandler.Login)
+	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
+	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
 
+	api.GET("/campaigns", campaignHandler.GetCampaign)
 	router.Run()
 
 }
