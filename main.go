@@ -25,11 +25,18 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	// err = db.AutoMigrate(&user.User{}, &campaign.Campaign{})
+	// if err != nil {
+	// 	log.Fatal(err.Error())
+	// }
+	// log.Println("Connection to database established")
+
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
 
 	userService := user.NewService(userRepository)
 	campaignService := campaign.NewService(campaignRepository)
+
 	authService := auth.NewService()
 
 	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
@@ -55,7 +62,8 @@ func main() {
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
 
-	api.GET("/campaigns", campaignHandler.GetCampaign)
+	api.GET("/campaigns", campaignHandler.GetCampaigns)
+	api.GET("/campaigns/:id", campaignHandler.GetCampaign)
 	router.Run()
 
 }

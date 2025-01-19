@@ -1,9 +1,11 @@
 package user //karena file dalam user, maka package user
 
-import "time"
+import (
+	"time"
+)
 
 type User struct {
-	ID             int
+	ID             int `gorm:"primaryKey"`
 	Name           string
 	Occupation     string
 	Email          string
