@@ -33,6 +33,7 @@ func main() {
 	userService := user.NewService(userRepository)
 	campaignService := campaign.NewService(campaignRepository)
 	transactionService := transaction.NewService(transactionRepository, campaignRepository)
+
 	authService := auth.NewService()
 
 	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
@@ -66,6 +67,7 @@ func main() {
 	api.POST("/campaign-images", authMiddleware(authService, userService), campaignHandler.UploadImage)
 
 	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransactions)
+	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
 	router.Run()
 
 }
