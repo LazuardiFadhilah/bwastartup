@@ -5,6 +5,7 @@ import (
 	"bwastartup/campaign"
 	"bwastartup/handler"
 	"bwastartup/helper"
+	"bwastartup/transaction"
 	"bwastartup/user"
 	"fmt"
 	"log"
@@ -25,17 +26,13 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	// err = db.AutoMigrate(&user.User{}, &campaign.Campaign{})
-	// if err != nil {
-	// 	log.Fatal(err.Error())
-	// }
-	// log.Println("Connection to database established")
-
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
+	transactionRepository := transaction.NewRepository(db)
 
 	userService := user.NewService(userRepository)
 	campaignService := campaign.NewService(campaignRepository)
+	transactionService := transaction.NewService(transactionRepository, campaignRepository)
 	authService := auth.NewService()
 
 	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
@@ -51,6 +48,7 @@ func main() {
 
 	userHandler := handler.NewUSerHandler(userService, authService)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	router := gin.Default()
 	router.Static("/images", "./images")
@@ -66,6 +64,8 @@ func main() {
 	api.POST("/campaigns", authMiddleware(authService, userService), campaignHandler.CreateCampaign)
 	api.PUT("/campaigns/:id", authMiddleware(authService, userService), campaignHandler.UpdateCampaign)
 	api.POST("/campaign-images", authMiddleware(authService, userService), campaignHandler.UploadImage)
+
+	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransactions)
 	router.Run()
 
 }
