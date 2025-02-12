@@ -34,6 +34,20 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	// Check email is available or not
+	isEmailAvailable, err := h.userService.IsEmailAvailable(user.CheckEmailInput{Email: input.Email})
+	if err != nil {
+		response := helper.APIResponse("Server Error", http.StatusInternalServerError, "Error", nil)
+		c.JSON(http.StatusInternalServerError, response)
+		return
+	}
+
+	if !isEmailAvailable {
+		response := helper.APIResponse("Email has been registered", http.StatusConflict, "Error", gin.H{"is_available": false})
+		c.JSON(http.StatusConflict, response)
+		return
+	}
+
 	newUser, err := h.userService.RegisterUser(input)
 	if err != nil {
 		response := helper.APIResponse("Register Account Failed", http.StatusBadRequest, "Error", nil)
@@ -50,7 +64,7 @@ func (h *UserHandler) RegisterUser(c *gin.Context) {
 	}
 	formatter := user.FormatUser(newUser, token)
 
-	response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
+	response := helper.APIResponse("Register Success", http.StatusOK, "success", formatter)
 
 	c.JSON(http.StatusOK, response)
 
