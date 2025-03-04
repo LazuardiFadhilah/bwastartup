@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
@@ -56,34 +57,13 @@ func main() {
 
 	// Router setup
 	router := gin.Default()
-
-	// Disable CORS restrictions
-	router.Use(func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-
-		allowedOrigin := "https://startup-frontend.vercel.app"
-		if origin == allowedOrigin {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
-		}
-
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-
-		if c.Request.Method == "OPTIONS" {
-			c.Writer.WriteHeader(http.StatusOK)
-			return
-		}
-
-		c.Next()
-	})
-
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"https://startup-frontend.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
-		ExposeHeaders:    []string{"Authorization"},
-		AllowCredentials: false,
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	// API Routes
