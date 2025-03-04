@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -23,15 +22,9 @@ import (
 func main() {
 	dsn := "root:HDupBZFWqtYuGSUsiHeHxgltrvLzcgWf@tcp(yamabiko.proxy.rlwy.net:56776)/railway?parseTime=true"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	// err = godotenv.Load()
-	// if err != nil {
-	// 	log.Fatal("Error loading .env file")
-	// }
 
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
@@ -44,41 +37,38 @@ func main() {
 
 	authService := auth.NewService()
 
+	// Test token validation
 	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
 	if err != nil {
 		fmt.Println("ERROR")
 	}
-
 	if token.Valid {
 		fmt.Println("VALID")
 	} else {
 		fmt.Println("INVALID")
 	}
 
+	// Handlers
 	userHandler := handler.NewUSerHandler(userService, authService)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
+	// Router setup
 	router := gin.Default()
+
+	// Disable CORS restrictions
 	router.Use(func(c *gin.Context) {
-		fmt.Println("CORS Middleware executed for:", c.Request.Method, c.Request.URL.Path)
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
 		if c.Request.Method == "OPTIONS" {
-			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-			c.Writer.WriteHeader(http.StatusNoContent)
+			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
 		c.Next()
 	})
 
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Authorization", "Content-Type"},
-		ExposeHeaders:    []string{"Authorization"},
-		AllowCredentials: false,
-	}))
+	// API Routes
 	api := router.Group("/api/v1")
 	router.Static("/images", "./images")
 
@@ -98,8 +88,8 @@ func main() {
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
-	router.Run()
 
+	router.Run()
 }
 
 func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
@@ -111,27 +101,22 @@ func authMiddleware(authService auth.Service, userService user.Service) gin.Hand
 			return
 		}
 
-		tokenString := ""
-		arrayToken := strings.Split(authHeader, " ")
-		if len(arrayToken) == 2 {
-			tokenString = arrayToken[1]
-		}
+		tokenString := strings.Split(authHeader, " ")[1]
 		token, err := authService.ValidateToken(tokenString)
-		if err != nil {
+		if err != nil || !token.Valid {
 			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
 
 		claim, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
+		if !ok {
 			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
 			return
 		}
 
 		userID := int(claim["user_id"].(float64))
-
 		user, err := userService.GetUserByID(userID)
 		if err != nil {
 			response := helper.APIResponse("Unauthorized", http.StatusUnauthorized, "error", nil)
@@ -140,6 +125,5 @@ func authMiddleware(authService auth.Service, userService user.Service) gin.Hand
 		}
 
 		c.Set("currentUser", user)
-
 	}
 }
