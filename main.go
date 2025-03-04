@@ -60,15 +60,26 @@ func main() {
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		if c.Request.Method == "OPTIONS" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			c.Writer.WriteHeader(http.StatusNoContent)
+			return
+		}
+		c.Next()
+	})
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"https://startup-frontend.vercel.app", "https://api.sandbox.midtrans.com"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Authorization"},
 		AllowCredentials: true,
 	}))
-	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
+	router.Static("/images", "./images")
 
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)
