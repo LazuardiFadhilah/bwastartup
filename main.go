@@ -8,7 +8,6 @@ import (
 	"bwastartup/payment"
 	"bwastartup/transaction"
 	"bwastartup/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -38,17 +37,6 @@ func main() {
 	transactionService := transaction.NewService(transactionRepository, campaignRepository, paymentService)
 
 	authService := auth.NewService()
-
-	// Test token validation
-	token, err := authService.ValidateToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMX0.J3geSMCoxASJJzSYBZwGxfAlAhmVPdIeAx6_17o3HhA")
-	if err != nil {
-		fmt.Println("ERROR")
-	}
-	if token.Valid {
-		fmt.Println("VALID")
-	} else {
-		fmt.Println("INVALID")
-	}
 
 	// Handlers
 	userHandler := handler.NewUSerHandler(userService, authService)
@@ -84,10 +72,20 @@ func main() {
 
 	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransactions)
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
-	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
+
+	// Menangani CORS untuk transactions
 	api.OPTIONS("/transactions", func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "https://startup-frontend.vercel.app")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Status(http.StatusOK)
 	})
+
+	api.POST("/transactions", func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "https://startup-frontend.vercel.app")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Next()
+	}, authMiddleware(authService, userService), transactionHandler.CreateTransaction)
+
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
 
 	router.Run()
