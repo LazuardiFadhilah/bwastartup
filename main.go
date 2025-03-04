@@ -61,6 +61,7 @@ func main() {
 
 	router := gin.Default()
 	router.Use(func(c *gin.Context) {
+		fmt.Println("CORS Middleware executed for:", c.Request.Method, c.Request.URL.Path)
 		if c.Request.Method == "OPTIONS" {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -72,11 +73,11 @@ func main() {
 	})
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://startup-frontend.vercel.app", "https://api.sandbox.midtrans.com"},
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Authorization", "Content-Type"},
 		ExposeHeaders:    []string{"Authorization"},
-		AllowCredentials: true,
+		AllowCredentials: false,
 	}))
 	api := router.Group("/api/v1")
 	router.Static("/images", "./images")
