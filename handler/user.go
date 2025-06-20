@@ -213,13 +213,21 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
+	currentUser, err := h.userService.GetUserByID(input.ID)
+	if err != nil {
+		response := helper.APIResponse("USER_NOT_FOUND", http.StatusBadRequest, "Error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	fmt.Println("Current User:", currentUser)
 	deletedUser, err := h.userService.DeleteUser(input.ID)
+	fmt.Print(deletedUser)
 	if err != nil {
 		response := helper.APIResponse("DELETE_USER_FAILED", http.StatusBadRequest, "Error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
-	formatter := user.FormatUser(deletedUser, "")
+	formatter := user.FormatUser(currentUser, "")
 	response := helper.APIResponse("USER_DELETED", http.StatusOK, "success", formatter)
 	c.JSON(http.StatusOK, response)
 }

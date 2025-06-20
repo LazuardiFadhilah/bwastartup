@@ -17,5 +17,5 @@ type CheckEmailInput struct {
 }
 
 type DeleteUserInput struct {
-	ID int `json:"id" binding:"required"`
+	ID int `uri:"id" binding:"required"`
 }
