@@ -63,6 +63,7 @@ func main() {
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
 	api.GET("/users/fetch", authMiddleware(authService, userService), userHandler.FetchUser)
+	api.DELETE("/users/:id", userHandler.DeleteUser)
 
 	api.GET("/campaigns", campaignHandler.GetCampaigns)
 	api.GET("/campaigns/:id", campaignHandler.GetCampaign)

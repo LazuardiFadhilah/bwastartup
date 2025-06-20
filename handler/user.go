@@ -200,3 +200,26 @@ func (h *UserHandler) FetchUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	var input user.DeleteUserInput
+	err := c.ShouldBindUri(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+
+		errorsMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("DELETE_USER_FAILED", http.StatusBadRequest, "Error", errorsMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+	deletedUser, err := h.userService.DeleteUser(input.ID)
+	if err != nil {
+		response := helper.APIResponse("DELETE_USER_FAILED", http.StatusBadRequest, "Error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	formatter := user.FormatUser(deletedUser, "")
+	response := helper.APIResponse("USER_DELETED", http.StatusOK, "success", formatter)
+	c.JSON(http.StatusOK, response)
+}

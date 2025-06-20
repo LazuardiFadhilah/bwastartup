@@ -8,6 +8,7 @@ type Repository interface {
 	FindByEmail(email string) (User, error)
 	FindById(ID int) (User, error)
 	Update(user User) (User, error)
+	Delete(ID int) (User, error)
 }
 
 type repository struct {
@@ -56,6 +57,17 @@ func (r *repository) FindById(id int) (User, error) {
 
 func (r *repository) Update(user User) (User, error) {
 	err := r.db.Save(&user).Error
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (r *repository) Delete(ID int) (User, error) {
+	var user User
+
+	err := r.db.Where("id = ?", ID).Delete(&user).Error
 	if err != nil {
 		return user, err
 	}
