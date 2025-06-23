@@ -163,3 +163,28 @@ func (h *campaignHandler) UploadImage(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
+func (h *campaignHandler) DeleteCampaign(c *gin.Context) {
+	var input campaign.GetCampaignDetailInput
+
+	err := c.ShouldBindUri(&input)
+	if err != nil {
+		response := helper.APIResponse("DELETE_CAMPAIGN_FAILED", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	currentUser := c.MustGet("currentUser").(user.User)
+
+	input.User = currentUser
+
+	deletedCampaign, err := h.service.DeleteCampaign(input)
+	if err != nil {
+		response := helper.APIResponse("DELETE_CAMPAIGN_FAILED", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	fmt.Println("Deleted Campaign:", deletedCampaign)
+	response := helper.APIResponse("CAMPAIGN_DELETED_SUCCESS", http.StatusOK, "success", nil)
+	c.JSON(http.StatusOK, response)
+}
